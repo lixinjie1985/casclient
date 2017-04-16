@@ -1,0 +1,350 @@
+5    接入
+5.1 WEB接入
+5.1.1 非Spring模式
+
+在Client工程WEB-INF/lib下添加cas-client-core-3.2.1.jar包。
+
+修改web.xml如下：
+
+<!-- ======================== 单点登录/登出 ======================== -->
+
+ 
+
+<!-- 该过滤器用于实现单点登出功能，可选配置。 -->
+
+<filter>
+
+   <filter-name>CAS Single Sign Out Filter</filter-name>
+
+   <filter-class>org.jasig.cas.client.session.SingleSignOutFilter</filter-class>
+
+</filter>
+
+ 
+
+<!-- 该过滤器负责用户的认证工作，必须启用它 -->
+
+<filter>
+
+  <filter-name>CAS Authentication Filter</filter-name>
+
+  <filter-class>org.jasig.cas.client.authentication.AuthenticationFilter</filter-class>
+
+  <init-param>
+
+    <param-name>casServerLoginUrl</param-name>
+
+    <param-value>https://localhost:8443/cas/login</param-value>
+
+  </init-param>
+
+  <init-param>
+
+    <param-name>serverName</param-name>
+
+    <param-value>http://localhost:8080</param-value>
+
+  </init-param>
+
+</filter>
+
+ 
+
+<!-- 该过滤器负责对Ticket的校验工作，必须启用它 -->
+
+<filter>
+
+    <filter-name>CAS Validation Filter</filter-name>
+
+    <filter-class>org.jasig.cas.client.validation.Cas10TicketValidationFilter</filter-class>
+
+    <init-param>
+
+        <param-name>casServerUrlPrefix</param-name>
+
+        <param-value>https://localhost:8443/cas</param-value>
+
+    </init-param>
+
+    <init-param>
+
+        <param-name>serverName</param-name>
+
+        <param-value>http://localhost:8080</param-value>
+
+    </init-param>
+
+    <init-param>
+
+        <param-name>redirectAfterValidation</param-name>
+
+        <param-value>true</param-value>
+
+    </init-param>
+
+</filter>
+
+ 
+
+<!-- 该过滤器负责实现HttpServletRequest请求的包裹，
+
+比如允许开发者通过HttpServletRequest的getRemoteUser()方法获得SSO登录用户的登录名，可选配置。 -->
+
+<filter>
+
+  <filter-name>CAS HttpServletRequest Wrapper Filter</filter-name>
+
+  <filter-class>org.jasig.cas.client.util.HttpServletRequestWrapperFilter</filter-class>
+
+</filter>
+
+ 
+
+<!-- 该过滤器使得开发者可以通过org.jasig.cas.client.util.AssertionHolder来获取用户的登录名。
+
+ 比如AssertionHolder.getAssertion().getPrincipal().getName()。-->
+
+<filter>
+
+  <filter-name>CAS Assertion Thread Local Filter</filter-name>
+
+  <filter-class>org.jasig.cas.client.util.AssertionThreadLocalFilter</filter-class>
+
+</filter>
+
+ 
+
+<filter-mapping>
+
+   <filter-name>CAS Single Sign Out Filter</filter-name>
+
+   <url-pattern>/*</url-pattern>
+
+</filter-mapping>
+
+<filter-mapping>
+
+    <filter-name>CAS Authentication Filter</filter-name>
+
+    <url-pattern>/*</url-pattern>
+
+</filter-mapping>
+
+<filter-mapping>
+
+    <filter-name>CAS Validation Filter</filter-name>
+
+    <url-pattern>/*</url-pattern>
+
+</filter-mapping>
+
+<filter-mapping>
+
+    <filter-name>CAS HttpServletRequest Wrapper Filter</filter-name>
+
+    <url-pattern>/*</url-pattern>
+
+</filter-mapping>
+
+<filter-mapping>
+
+    <filter-name>CAS Assertion Thread Local Filter</filter-name>
+
+    <url-pattern>/*</url-pattern>
+
+</filter-mapping>
+
+ 
+
+<listener>
+
+    <listener-class>org.jasig.cas.client.session.SingleSignOutHttpSessionListener</listener-class>
+
+</listener>
+
+<!-- ======================== 单点登录/登出结束 ======================== -->
+
+现在运行Client工程，首次访问任一页面就会跳转到https://localhost:8443/cas/login进行认证。同时，把你的退出链接设置为：https://sso.wsria.com/cas/logout 即可实现单点推出。
+5.1.2 Spring方式
+
+引用cas-client-core.jar
+
+Web.xml，注意casSingleSignOutFilter必须位于最前面
+
+<listener>        <listener-class>org.jasig.cas.client.session.SingleSignOutHttpSessionListener</listener-class>
+
+    </listener>
+
+<!-- ======================== 单点登录/登出 ======================== -->
+
+    <filter>
+
+        <filter-name>casSingleSignOutFilter</filter-name>
+
+        <filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
+
+    </filter>
+
+    <filter-mapping>
+
+        <filter-name>casSingleSignOutFilter</filter-name>
+
+        <url-pattern>/*</url-pattern>
+
+    </filter-mapping>
+
+    <filter>
+
+       <filter-name>casAuthenticationFilter</filter-name>
+
+       <filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
+
+    </filter>
+
+    <filter-mapping>
+
+       <filter-name>casAuthenticationFilter</filter-name>
+
+       <url-pattern>/*</url-pattern>
+
+    </filter-mapping>
+
+    <filter>
+
+       <filter-name>casTicketValidationFilter</filter-name>
+
+       <filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
+
+    </filter>
+
+    <filter-mapping>
+
+       <filter-name>casTicketValidationFilter</filter-name>
+
+       <url-pattern>/*</url-pattern>
+
+    </filter-mapping>
+
+   
+
+    <filter>
+
+       <filter-name>casHttpServletRequestWrapperFilter</filter-name>
+
+       <filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
+
+    </filter>
+
+    <filter-mapping>
+
+       <filter-name>casHttpServletRequestWrapperFilter</filter-name>
+
+       <url-pattern>/*</url-pattern>
+
+    </filter-mapping>
+
+   
+
+    <filter>
+
+       <filter-name>casAssertionThreadLocalFilter</filter-name>
+
+       <filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
+
+    </filter>
+
+    <filter-mapping>
+
+       <filter-name>casAssertionThreadLocalFilter</filter-name>
+
+       <url-pattern>/*</url-pattern>
+
+    </filter-mapping>
+
+    <!-- ======================== 单点登录/登出结束 ======================== -->
+
+ 
+
+appliationContext.xml
+
+<bean id="casSingleSignOutFilter"
+
+        class="org.jasig.cas.client.session.SingleSignOutFilter" />
+
+   
+
+    <bean name="casAuthenticationFilter"
+
+       class="org.jasig.cas.client.authentication.AuthenticationFilter"
+
+       p:casServerLoginUrl="http://localhost:9000/uq-w-cas/login"
+
+       p:renew="false"
+
+       p:gateway="false" p:serverName="http://localhost:8080" />
+
+ 
+
+    <bean name="casTicketValidationFilter"
+
+       class="org.jasig.cas.client.validation.Cas10TicketValidationFilter"
+
+       p:serverName="http://localhost:8080"
+
+       p:redirectAfterValidation="true">
+
+       <property name="ticketValidator">
+
+           <bean class="org.jasig.cas.client.validation.Cas10TicketValidator">
+
+              <!-- 对应于casServerUrlPrefix -->
+
+              <constructor-arg index="0" value="http://localhost:9000/uq-w-cas" />
+
+           </bean>
+
+       </property>
+
+    </bean>
+
+ 
+
+    <bean id="casHttpServletRequestWrapperFilter"
+
+       class="org.jasig.cas.client.util.HttpServletRequestWrapperFilter" />
+
+   
+
+    <bean id="casAssertionThreadLocalFilter"
+
+        class="org.jasig.cas.client.util.AssertionThreadLocalFilter" />
+
+   页面
+
+<%
+
+   AttributePrincipal  principal= (AttributePrincipal)request.getUserPrincipal();   
+
+   String username = "i am username";
+
+   if(null!=principal){
+
+      username=principal.getName();
+
+   %>
+
+   <h1>登录成功，这是客户端1啊</h1><br/>
+
+   用户名：<%=username %><br/>
+
+   <a href="http://localhost:8989/Casclient2/index.jsp">进入客户端2</a><br/>
+
+  
+
+   <a href="http://localhost:9000/uq-w-cas/logout?service=http://localhost:9000/uq-w-cas/">退出</a><br/
+
+   <%
+
+   }
+
+   %>
